@@ -1,4 +1,9 @@
 terraform {
+  required_version = ">= 1.10"
+
+  # Configured via -backend-config in terraform init.
+  backend "s3" {}
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"

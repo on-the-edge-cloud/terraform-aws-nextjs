@@ -4,12 +4,13 @@ Deploys either an SSR or static Next.js application and derives resource names f
 
 ```hcl
 module "nextjs" {
-  source = "../../modules/nextjs-deployment"
+  source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-deployment"
+  version = "1.3.0"
 
   app_slug        = "my-app"
   app_directory   = abspath(".")
   deployment_type = "ssr"
-  pr_number      = "42"
+  pr_number       = "42"
 }
 ```
 

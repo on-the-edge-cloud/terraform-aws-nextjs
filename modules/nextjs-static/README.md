@@ -5,7 +5,7 @@ Deploys a Next.js static export from `app_directory/out` to a private S3 bucket 
 ```hcl
 module "nextjs_static" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-static"
-  version = "1.3.0"
+  version = "1.4.1"
 
   environment     = "pr-42"
   resource_prefix = "deploy-aws-pr-42-"

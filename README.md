@@ -34,4 +34,4 @@ module "nextjs_static" {
 
 The static module uploads `app_directory/out` to private S3 and serves it through CloudFront with OAC. Preview deployments should set `force_destroy = true`; production should leave it false. Use `deploy_artifacts = false` when destroying without a local build.
 
-Examples are in [`examples/ssr`](examples/ssr) and [`examples/static`](examples/static).
+Examples are in [`example/ssr`](example/ssr) and [`example/static`](example/static).

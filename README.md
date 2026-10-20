@@ -34,4 +34,8 @@ module "nextjs_static" {
 
 The static module uploads `app_directory/out` to private S3 and serves it through CloudFront with OAC. Preview deployments should set `force_destroy = true`; production should leave it false. Use `deploy_artifacts = false` when destroying without a local build.
 
+## Simplified deployment module
+
+Use [`modules/nextjs-deployment`](modules/nextjs-deployment/README.md) to select SSR or static deployment and derive preview naming from an application slug and pull request number. The caller still configures the AWS provider and Terraform backend.
+
 Examples are in [`example/ssr`](example/ssr) and [`example/static`](example/static).

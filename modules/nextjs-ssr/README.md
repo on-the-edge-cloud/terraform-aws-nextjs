@@ -5,7 +5,7 @@ Deploys an OpenNext build to Lambda, S3 and CloudFront, with DynamoDB and SQS-ba
 ```hcl
 module "nextjs_ssr" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-ssr"
-  version = "1.4.2"
+  version = "1.4.3"
 
   providers = {
     aws           = aws

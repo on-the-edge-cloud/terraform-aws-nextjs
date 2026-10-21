@@ -22,7 +22,7 @@ provider "cloudflare" {}
 ```hcl
 module "nextjs_ssr" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws"
-  version = "1.4.2"
+  version = "1.4.3"
 
   providers = {
     aws           = aws
@@ -44,7 +44,7 @@ The SSR module deploys OpenNext Lambda bundles, private S3 assets/cache, CloudFr
 ```hcl
 module "nextjs_static" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-static"
-  version = "1.4.2"
+  version = "1.4.3"
 
   providers = {
     aws           = aws

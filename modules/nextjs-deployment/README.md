@@ -5,7 +5,7 @@ Deploys either an SSR or static Next.js application and derives resource names f
 ```hcl
 module "nextjs" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-deployment"
-  version = "1.4.2"
+  version = "1.4.3"
 
   providers = {
     aws           = aws

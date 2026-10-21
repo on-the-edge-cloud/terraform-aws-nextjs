@@ -21,21 +21,25 @@ module "ssr" {
   source = "../nextjs-ssr"
   count  = var.deployment_type == "ssr" ? 1 : 0
 
-  name             = local.resource_name
-  environment      = local.environment
-  resource_prefix  = local.resource_prefix
-  app_directory    = var.app_directory
-  deploy_artifacts = var.deploy_artifacts
-  force_destroy    = local.is_preview
+  domain              = var.domain
+  acm_certificate_arn = var.acm_certificate_arn
+  name                = local.resource_name
+  environment         = local.environment
+  resource_prefix     = local.resource_prefix
+  app_directory       = var.app_directory
+  deploy_artifacts    = var.deploy_artifacts
+  force_destroy       = local.is_preview
 }
 
 module "static" {
   source = "../nextjs-static"
   count  = var.deployment_type == "static" ? 1 : 0
 
-  environment      = local.environment
-  resource_prefix  = local.resource_prefix
-  app_directory    = var.app_directory
-  deploy_artifacts = var.deploy_artifacts
-  force_destroy    = local.is_preview
+  domain              = var.domain
+  acm_certificate_arn = var.acm_certificate_arn
+  environment         = local.environment
+  resource_prefix     = local.resource_prefix
+  app_directory       = var.app_directory
+  deploy_artifacts    = var.deploy_artifacts
+  force_destroy       = local.is_preview
 }

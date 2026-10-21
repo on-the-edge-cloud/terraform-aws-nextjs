@@ -1,3 +1,20 @@
+variable "domain" {
+  description = "Optional custom domain for CloudFront, covered by acm_certificate_arn."
+  type        = string
+  default     = null
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN of an issued ACM certificate in us-east-1 covering domain. Required when domain is set."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.acm_certificate_arn == null ? true : can(regex("^arn:[^:]+:acm:us-east-1:[0-9]{12}:certificate/.+$", var.acm_certificate_arn))
+    error_message = "acm_certificate_arn must be an ACM certificate ARN in us-east-1."
+  }
+}
+
 variable "name" {
   description = "Optional fully composed resource name. When empty, resource_prefix without its trailing hyphen is used."
   type        = string

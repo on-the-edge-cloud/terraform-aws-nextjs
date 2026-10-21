@@ -1,3 +1,15 @@
+variable "domain" {
+  description = "Optional custom domain for CloudFront, covered by acm_certificate_arn."
+  type        = string
+  default     = null
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN of an issued ACM certificate in us-east-1 covering domain. Required when domain is set."
+  type        = string
+  default     = null
+}
+
 variable "app_slug" {
   description = "Short lowercase application identifier used in AWS resource names."
   type        = string

@@ -23,6 +23,9 @@ module "nextjs" {
   app_directory   = abspath("../..")
   deployment_type = "static"
   pr_number       = "42"
+
+  domain              = "static-pr-42.ontheedge.cloud"
+  acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 }
 
 output "preview_url" {

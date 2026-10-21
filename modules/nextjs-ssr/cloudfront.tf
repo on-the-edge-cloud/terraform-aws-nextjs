@@ -54,6 +54,7 @@ resource "aws_cloudfront_cache_policy" "server" {
 }
 
 resource "aws_cloudfront_distribution" "app" {
+  aliases         = var.domain == null ? [] : [var.domain]
   enabled         = true
   is_ipv6_enabled = true
   comment         = "Next.js ${var.environment}"
@@ -126,7 +127,17 @@ resource "aws_cloudfront_distribution" "app" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.domain == null
+    acm_certificate_arn            = var.acm_certificate_arn
+    ssl_support_method             = var.domain == null ? null : "sni-only"
+    minimum_protocol_version       = var.domain == null ? "TLSv1" : "TLSv1.2_2021"
+  }
+
+  lifecycle {
+    precondition {
+      condition     = (var.domain == null) == (var.acm_certificate_arn == null)
+      error_message = "domain and acm_certificate_arn must be set together or both omitted."
+    }
   }
 
   tags = { Environment = var.environment }

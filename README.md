@@ -7,7 +7,7 @@ Reusable Terraform modules for static and SSR Next.js deployments on AWS. The re
 ```hcl
 module "nextjs_ssr" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws"
-  version = "1.4.1"
+  version = "1.4.2"
 
   environment      = "pr-42"
   resource_prefix  = "deploy-aws-pr-42-"
@@ -23,7 +23,7 @@ The SSR module deploys OpenNext Lambda bundles, private S3 assets/cache, CloudFr
 ```hcl
 module "nextjs_static" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-static"
-  version = "1.4.1"
+  version = "1.4.2"
 
   environment      = "pr-42"
   resource_prefix  = "deploy-aws-static-pr-42-"

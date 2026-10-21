@@ -7,17 +7,21 @@ module "nextjs" {
   source  = "on-the-edge-cloud/terraform-aws-nextjs/aws//modules/nextjs-deployment"
   version = "1.4.2"
 
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+    cloudflare    = cloudflare
+  }
+
   app_slug        = "my-app"
   app_directory   = abspath(".")
   deployment_type = "ssr"
-  pr_number       = "42"
-
-  domain              = "ssr-pr-42.ontheedge.cloud"
-  acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+  pr_number       = ""
+  domain          = "app.ontheedge.cloud"
 }
 ```
 
-Replace the example domain and certificate ARN with your own values. The certificate must be issued in **us-east-1** and cover the domain. Omit both inputs to use only the default CloudFront domain. The [static example](../../example/static/main.tf) and [SSR example](../../example/ssr/main.tf) use distinct preview subdomains; point the chosen domain's DNS record to the resulting CloudFront hostname.
+The caller configures AWS providers for the application region and `us-east-1`, plus Cloudflare with `CLOUDFLARE_API_TOKEN`. Terraform creates and validates the ACM certificate and validation records automatically. A custom domain is applied only when `pr_number` is empty; previews always use their default CloudFront hostname, even if `domain` is set. Omit `domain` to use only the default CloudFront domain in production too.
 
 Set `deployment_type` to `static` for a static export. Leave `pr_number` empty for production. Preview deployments automatically use a PR-specific environment and allow bucket destruction; production deployments do not. The caller still configures the AWS provider and Terraform backend.
 
@@ -27,11 +31,10 @@ Outputs include `url`, `preview_url`, `cloudfront_distribution_id` and `s3_bucke
 
 ## Custom domain
 
-Both `deployment_type = "static"` and `deployment_type = "ssr"` support these optional inputs:
+Both `deployment_type = "static"` and `deployment_type = "ssr"` support this optional input:
 
 ```hcl
-domain              = "ontheedge.cloud"
-acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+domain = "ontheedge.cloud"
 ```
 
-Set both inputs or omit both to retain the default CloudFront domain and certificate. The existing ACM certificate must be issued in **us-east-1** and cover `domain`. Use a distinct domain for each preview distribution. Certificate issuance and DNS records are managed outside this module. See the [custom domain setup](../../README.md#custom-domain-static-and-ssr) for ACM validation and Cloudflare configuration.
+Terraform creates the production ACM certificate in **us-east-1** and validates it through DNS records in Cloudflare. Preview deployments do not receive or claim the production domain. See the [custom domain setup](../../README.md#custom-domain-static-and-ssr) for provider configuration details.

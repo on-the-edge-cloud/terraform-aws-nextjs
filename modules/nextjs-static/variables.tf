@@ -1,18 +1,7 @@
 variable "domain" {
-  description = "Optional custom domain for CloudFront, covered by acm_certificate_arn."
+  description = "Optional custom domain for CloudFront. ACM certificate and Cloudflare DNS validation are managed automatically."
   type        = string
   default     = null
-}
-
-variable "acm_certificate_arn" {
-  description = "ARN of an issued ACM certificate in us-east-1 covering domain. Required when domain is set."
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.acm_certificate_arn == null ? true : can(regex("^arn:[^:]+:acm:us-east-1:[0-9]{12}:certificate/.+$", var.acm_certificate_arn))
-    error_message = "acm_certificate_arn must be an ACM certificate ARN in us-east-1."
-  }
 }
 
 variable "environment" {

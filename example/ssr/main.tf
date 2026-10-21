@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.7"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
   }
 }
 
@@ -20,16 +24,26 @@ provider "aws" {
   region = "eu-north-1"
 }
 
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+provider "cloudflare" {}
+
 module "nextjs" {
   source = "../../modules/nextjs-deployment"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+    cloudflare    = cloudflare
+  }
 
   app_slug        = "example-nextjs"
   app_directory   = abspath("../..")
   deployment_type = "ssr"
   pr_number       = "42"
-
-  domain              = "ssr-pr-42.ontheedge.cloud"
-  acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
 }
 
 output "preview_url" {

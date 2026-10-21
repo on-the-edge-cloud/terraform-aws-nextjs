@@ -1,9 +1,40 @@
+terraform {
+  required_providers {
+    aws = {
+      source                = "hashicorp/aws"
+      configuration_aliases = [aws.us_east_1]
+    }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+  }
+}
+
+data "cloudflare_zones" "available" {
+  count = var.domain == null ? 0 : 1
+
+  filter {
+    name        = "."
+    lookup_type = "contains"
+  }
+}
+
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 locals {
   name  = trimsuffix(var.resource_prefix, "-")
   files = var.deploy_artifacts ? fileset("${var.app_directory}/out", "**") : toset([])
+  matching_zones = var.domain == null ? [] : [
+    for zone in data.cloudflare_zones.available[0].zones : zone
+    if var.domain == zone.name || endswith(var.domain, ".${zone.name}")
+  ]
+  longest_zone_length = length(local.matching_zones) == 0 ? 0 : max([for zone in local.matching_zones : length(zone.name)]...)
+  cloudflare_zone = try(one([
+    for zone in local.matching_zones : zone
+    if length(zone.name) == local.longest_zone_length
+  ]), null)
   content_types = {
     css   = "text/css"
     html  = "text/html"
@@ -111,19 +142,57 @@ resource "aws_cloudfront_distribution" "site" {
 
   viewer_certificate {
     cloudfront_default_certificate = var.domain == null
-    acm_certificate_arn            = var.acm_certificate_arn
+    acm_certificate_arn            = var.domain == null ? null : aws_acm_certificate_validation.domain[0].certificate_arn
     ssl_support_method             = var.domain == null ? null : "sni-only"
     minimum_protocol_version       = var.domain == null ? "TLSv1" : "TLSv1.2_2021"
   }
 
+  tags = { Environment = var.environment }
+}
+
+resource "aws_acm_certificate" "domain" {
+  count    = var.domain == null ? 0 : 1
+  provider = aws.us_east_1
+
+  domain_name       = var.domain
+  validation_method = "DNS"
+
   lifecycle {
+    create_before_destroy = true
+
     precondition {
-      condition     = (var.domain == null) == (var.acm_certificate_arn == null)
-      error_message = "domain and acm_certificate_arn must be set together or both omitted."
+      condition     = local.cloudflare_zone != null
+      error_message = "The domain must match a Cloudflare zone accessible to the configured API token."
     }
   }
+}
 
-  tags = { Environment = var.environment }
+resource "cloudflare_record" "acm_validation" {
+  for_each = var.domain == null ? toset([]) : toset([var.domain])
+
+  zone_id = local.cloudflare_zone.id
+  name = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_name
+    if option.domain_name == each.key
+  ])
+  content = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_value
+    if option.domain_name == each.key
+  ])
+  type = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_type
+    if option.domain_name == each.key
+  ])
+  ttl     = 1
+  proxied = false
+}
+
+resource "aws_acm_certificate_validation" "domain" {
+  count    = var.domain == null ? 0 : 1
+  provider = aws.us_east_1
+
+  certificate_arn         = aws_acm_certificate.domain[0].arn
+  validation_record_fqdns = [for record in cloudflare_record.acm_validation : record.hostname]
 }
 
 resource "aws_s3_bucket_policy" "site" {

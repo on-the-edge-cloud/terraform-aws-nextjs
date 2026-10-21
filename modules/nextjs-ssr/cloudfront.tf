@@ -128,19 +128,57 @@ resource "aws_cloudfront_distribution" "app" {
 
   viewer_certificate {
     cloudfront_default_certificate = var.domain == null
-    acm_certificate_arn            = var.acm_certificate_arn
+    acm_certificate_arn            = var.domain == null ? null : aws_acm_certificate_validation.domain[0].certificate_arn
     ssl_support_method             = var.domain == null ? null : "sni-only"
     minimum_protocol_version       = var.domain == null ? "TLSv1" : "TLSv1.2_2021"
-  }
-
-  lifecycle {
-    precondition {
-      condition     = (var.domain == null) == (var.acm_certificate_arn == null)
-      error_message = "domain and acm_certificate_arn must be set together or both omitted."
-    }
   }
 
   tags = { Environment = var.environment }
 
   depends_on = [aws_lambda_permission.url, aws_lambda_permission.invoke, aws_s3_object.assets, aws_lambda_invocation.initialize_cache]
+}
+
+resource "aws_acm_certificate" "domain" {
+  count    = var.domain == null ? 0 : 1
+  provider = aws.us_east_1
+
+  domain_name       = var.domain
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+
+    precondition {
+      condition     = local.cloudflare_zone != null
+      error_message = "The domain must match a Cloudflare zone accessible to the configured API token."
+    }
+  }
+}
+
+resource "cloudflare_record" "acm_validation" {
+  for_each = var.domain == null ? toset([]) : toset([var.domain])
+
+  zone_id = local.cloudflare_zone.id
+  name = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_name
+    if option.domain_name == each.key
+  ])
+  content = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_value
+    if option.domain_name == each.key
+  ])
+  type = one([
+    for option in aws_acm_certificate.domain[0].domain_validation_options : option.resource_record_type
+    if option.domain_name == each.key
+  ])
+  ttl     = 1
+  proxied = false
+}
+
+resource "aws_acm_certificate_validation" "domain" {
+  count    = var.domain == null ? 0 : 1
+  provider = aws.us_east_1
+
+  certificate_arn         = aws_acm_certificate.domain[0].arn
+  validation_record_fqdns = [for record in cloudflare_record.acm_validation : record.hostname]
 }

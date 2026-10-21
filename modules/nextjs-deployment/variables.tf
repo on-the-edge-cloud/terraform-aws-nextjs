@@ -1,11 +1,5 @@
 variable "domain" {
-  description = "Optional custom domain for CloudFront, covered by acm_certificate_arn."
-  type        = string
-  default     = null
-}
-
-variable "acm_certificate_arn" {
-  description = "ARN of an issued ACM certificate in us-east-1 covering domain. Required when domain is set."
+  description = "Optional custom domain for CloudFront. ACM certificate and Cloudflare DNS validation are managed automatically."
   type        = string
   default     = null
 }

@@ -8,6 +8,18 @@ mock_provider "aws" {
   }
 }
 
+mock_provider "aws" {
+  alias = "us_east_1"
+}
+
+mock_provider "cloudflare" {
+  mock_data "cloudflare_zones" {
+    defaults = {
+      zones = [{ id = "zone-id", name = "ontheedge.cloud" }]
+    }
+  }
+}
+
 variables {
   environment      = "test"
   resource_prefix  = "domain-test-"
@@ -28,8 +40,7 @@ run "custom_domain" {
   command = plan
 
   variables {
-    domain              = "ontheedge.cloud"
-    acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+    domain = "ontheedge.cloud"
   }
 
   assert {
@@ -40,41 +51,18 @@ run "custom_domain" {
   assert {
     condition = (
       !aws_cloudfront_distribution.site.viewer_certificate[0].cloudfront_default_certificate &&
-      aws_cloudfront_distribution.site.viewer_certificate[0].acm_certificate_arn == var.acm_certificate_arn &&
       aws_cloudfront_distribution.site.viewer_certificate[0].ssl_support_method == "sni-only" &&
       aws_cloudfront_distribution.site.viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
     )
-    error_message = "Custom domains must use the provided ACM certificate with SNI and TLS 1.2."
-  }
-}
-
-run "domain_requires_certificate" {
-  command = plan
-
-  variables {
-    domain = "ontheedge.cloud"
+    error_message = "Custom domains must use an ACM certificate with SNI and TLS 1.2."
   }
 
-  expect_failures = [aws_cloudfront_distribution.site]
-}
-
-run "certificate_requires_domain" {
-  command = plan
-
-  variables {
-    acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+  assert {
+    condition = (
+      aws_acm_certificate.domain[0].domain_name == var.domain &&
+      aws_acm_certificate.domain[0].validation_method == "DNS" &&
+      cloudflare_record.acm_validation[var.domain].zone_id == "zone-id"
+    )
+    error_message = "A custom domain must create an ACM certificate and Cloudflare validation record automatically."
   }
-
-  expect_failures = [aws_cloudfront_distribution.site]
-}
-
-run "certificate_requires_us_east_1" {
-  command = plan
-
-  variables {
-    domain              = "ontheedge.cloud"
-    acm_certificate_arn = "arn:aws:acm:eu-north-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
-  }
-
-  expect_failures = [var.acm_certificate_arn]
 }
